@@ -22,7 +22,7 @@
 - 절대 크기(px) 대신 상대 크기(rem, %, dvh) 사용. 캔버스 안 그리기는 월드 단위(360x600)를 쓴다
 - CSS Modules 사용 (`.module.css`)
 - 색은 직접 쓰지 말고 테마 변수(`--color-*`, `--accent-solid`, `--theme-line`)를 쓸 것. 원본은 `src/shared/theme.ts`
-- 반경은 `--radius-sm/md/lg` (10/14/20px) 세 단계만
+- 반경은 `--radius`(2px) 하나만 쓴다. 판 위 박스와 범례 아이콘만 예외로 6px
 - 픽셀 아트는 `src/render/sprites.ts`에 문자열 격자로 둔다. 색 글자는 `pixelPalette`에 있어야 한다
 
 ## 브랜치

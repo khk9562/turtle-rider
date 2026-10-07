@@ -12,10 +12,40 @@ export interface View {
   dpr: number;
 }
 
-/** 월드(360x600)를 캔버스 안에 비율을 지켜 가운데 맞춘다 */
-export function fitView(cssW: number, cssH: number, dpr: number): View {
+/** 월드(360x600)를 캔버스 안에 비율을 지켜 맞춘다. alignLeft면 가로는 왼쪽에 붙인다(넓은 화면에서 패널 옆) */
+export function fitView(cssW: number, cssH: number, dpr: number, alignLeft = false): View {
   const scale = Math.min(cssW / WORLD_W, cssH / WORLD_H);
-  return { scale, ox: (cssW - WORLD_W * scale) / 2, oy: (cssH - WORLD_H * scale) / 2, dpr };
+  return { scale, ox: alignLeft ? 0 : (cssW - WORLD_W * scale) / 2, oy: (cssH - WORLD_H * scale) / 2, dpr };
+}
+
+/** 월드 단위 글자 크기. 판이 작아져도 화면에서 minCss(px)보다 작아지지 않게 한다 */
+let unitsPerCssPx = 1;
+function fontSize(base: number, minCss: number): number {
+  return Math.max(base, minCss * unitsPerCssPx);
+}
+
+/** 한 줄에 다 안 들어가면 띄어쓰기 단위로 나눈다 */
+function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let line = '';
+  for (const w of words) {
+    const next = line ? `${line} ${w}` : w;
+    if (line && ctx.measureText(next).width > maxWidth) {
+      lines.push(line);
+      line = w;
+    } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function haloText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, halo: number) {
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = halo;
+  ctx.strokeStyle = theme.surface;
+  ctx.strokeText(text, x, y);
+  ctx.fillText(text, x, y);
 }
 
 export function toWorld(view: View, cssX: number, cssY: number): Vec {
@@ -78,12 +108,20 @@ function drawBoxes(ctx: CanvasRenderingContext2D, level: Level, hit: boolean[]) 
     const px = 2;
     drawSprite(ctx, BOX_ICONS[box.type], x + 4, y + (h - 10 * px) / 2, px);
     const e = BOX_EFFECTS[box.type];
+    const label = `x${e.mult}`;
     ctx.fillStyle = theme.text;
-    ctx.font = `600 10px ${MONO}`;
+    ctx.font = `600 ${fontSize(10, 10)}px ${MONO}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    // 아이콘 오른쪽 남은 칸 가운데에 배율을 쓴다
-    ctx.fillText(`x${e.mult}`, (x + 4 + 10 * px + x + w) / 2, y + h / 2);
+    const inside = w - (4 + 10 * px) - 2;
+    if (ctx.measureText(label).width <= inside) {
+      // 아이콘 오른쪽 남은 칸 가운데에 배율을 쓴다
+      ctx.fillText(label, (x + 4 + 10 * px + x + w) / 2, y + h / 2);
+    } else {
+      // 판이 작아 글자가 커지면 박스 아래에 쓴다
+      ctx.textBaseline = 'top';
+      haloText(ctx, label, x + w / 2, y + h + 2, 3 * unitsPerCssPx);
+    }
     if (hit[i]) {
       ctx.fillStyle = theme.text;
       ctx.beginPath();
@@ -109,11 +147,11 @@ function drawEnds(ctx: CanvasRenderingContext2D, level: Level) {
   ctx.arc(start.x, start.y, 5, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  ctx.font = `600 10px ${FONT}`;
+  ctx.font = `600 ${fontSize(10, 11)}px ${FONT}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.fillStyle = theme.muted;
-  ctx.fillText('출발', start.x, start.y - 26);
+  haloText(ctx, '출발', start.x, start.y - 26, 3 * unitsPerCssPx);
 
   ctx.save();
   ctx.setLineDash([3, 4]);
@@ -125,7 +163,8 @@ function drawEnds(ctx: CanvasRenderingContext2D, level: Level) {
   ctx.restore();
   drawSprite(ctx, GOAL_FLAG, goal.x - 1, goal.y - 24, 2.2);
   ctx.fillStyle = theme.muted;
-  ctx.fillText('골', goal.x, goal.y + GOAL_RADIUS + 14);
+  ctx.textBaseline = 'top';
+  haloText(ctx, '골', goal.x, goal.y + GOAL_RADIUS + 4, 3 * unitsPerCssPx);
 }
 
 function drawPath(ctx: CanvasRenderingContext2D, pts: Vec[]) {
@@ -189,6 +228,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, view: View, cssW: numbe
   ctx.fillRect(0, 0, cssW, cssH);
   ctx.setTransform(dpr * view.scale, 0, 0, dpr * view.scale, dpr * view.ox, dpr * view.oy);
   ctx.imageSmoothingEnabled = false;
+  unitsPerCssPx = 1 / view.scale;
 
   drawBoard(ctx);
   if (scene.previewLine) drawPreviewLine(ctx, scene.level);
@@ -197,21 +237,27 @@ export function drawScene(ctx: CanvasRenderingContext2D, view: View, cssW: numbe
   drawEnds(ctx, scene.level);
   if (scene.turtle) drawTurtle(ctx, scene.turtle);
 
+  let y = 12;
   if (scene.clock) {
-    ctx.font = `600 26px ${MONO}`;
+    const size = fontSize(26, 20);
+    ctx.font = `600 ${size}px ${MONO}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = theme.surface;
-    ctx.strokeText(scene.clock, WORLD_W / 2, 12);
     ctx.fillStyle = theme.text;
-    ctx.fillText(scene.clock, WORLD_W / 2, 12);
+    haloText(ctx, scene.clock, WORLD_W / 2, y, 6 * Math.max(1, unitsPerCssPx));
+    y += size * 1.25;
+  } else {
+    y += 8;
   }
   if (scene.caption) {
-    ctx.font = `500 12px ${FONT}`;
+    const size = fontSize(12, 12);
+    ctx.font = `500 ${size}px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = theme.muted;
-    ctx.fillText(scene.caption, WORLD_W / 2, 44);
+    for (const line of wrapLines(ctx, scene.caption, WORLD_W - 24)) {
+      haloText(ctx, line, WORLD_W / 2, y, 4 * unitsPerCssPx);
+      y += size * 1.35;
+    }
   }
 }

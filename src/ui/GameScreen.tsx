@@ -167,6 +167,8 @@ function LevelPlay({
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
+    // 넓은 화면에서는 판을 패널 쪽(왼쪽)에 붙인다. CSS의 2열 기준과 같은 값
+    const wide = window.matchMedia('(min-width: 46rem)');
     const frame = (now: number) => {
       const canvas = canvasRef.current;
       const realDt = Math.min(0.05, (now - last) / 1000);
@@ -179,7 +181,7 @@ function LevelPlay({
           canvas.width = Math.round(cssW * dpr);
           canvas.height = Math.round(cssH * dpr);
         }
-        const view = fitView(cssW, cssH, dpr);
+        const view = fitView(cssW, cssH, dpr, wide.matches);
         viewRef.current = view;
 
         const ph = phaseRef.current;

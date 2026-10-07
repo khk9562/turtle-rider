@@ -146,10 +146,6 @@
   color: var(--color-text);
 }
 
-.stat dd b {
-  font-family: var(--font-mono);
-  font-weight: 600;
-}
 
 .dim {
   color: var(--color-muted);
@@ -251,7 +247,8 @@
 }
 
 .btn:disabled {
-  color: var(--color-faint);
+  color: var(--color-muted);
+  background: transparent;
 }
 
 .btn:focus-visible,
@@ -357,18 +354,66 @@
   flex: 1;
 }
 
-/* 아이패드, PC */
+/* 낮은 휴대폰(아이폰 SE 등): 정보 영역을 줄여 판에 높이를 더 준다 */
+@media (max-width: 45.99rem) and (max-height: 48rem) {
+  .screen {
+    row-gap: 0.5rem;
+  }
+
+  .goal {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .ruleValue {
+    font-size: 1rem;
+  }
+
+  .ruleValue b {
+    font-size: 1.1875rem;
+  }
+
+  .stat {
+    padding: 0.3rem 0;
+  }
+
+  .stat dd {
+    font-size: 0.8125rem;
+  }
+
+  .legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .legend::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip {
+    flex: none;
+  }
+
+  .btn {
+    min-height: 2.75rem;
+  }
+}
+
+/* 아이패드, PC: 판 너비(높이 x 0.6)만큼만 넓혀 패널과 판을 한 덩어리로 가운데 둔다 */
 @media (min-width: 46rem) {
   .screen {
-    max-width: 68rem;
+    max-width: calc(22rem + (100dvh - 3rem) * 0.6);
     grid-template-columns: 17rem minmax(0, 1fr);
-    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
     grid-template-areas:
       'header   stage'
       'goal     stage'
       'stats    stage'
       'legend   stage'
-      'controls stage';
+      'controls stage'
+      '.        stage';
     column-gap: 2rem;
     row-gap: 1.25rem;
     padding: 1.5rem 1.5rem;

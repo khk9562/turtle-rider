@@ -14,7 +14,7 @@
 | 스타일링 | CSS Modules, 상대 단위(rem, %, dvh) |
 | 빌드 | Vite 8 (`npm run build`), 단일 파일 `npm run build:single` |
 | 테스트 | vitest (`npm test`) |
-| 배포 | GitHub Pages. 워크플로 원본은 `docs/deploy-pages.yml` (저장소에 `.github/workflows/deploy.yml`로 직접 추가 필요) |
+| 배포 | GitHub Pages: `npm run deploy:pages`로 `gh-pages` 브랜치에 빌드 결과를 올린다 (https://khk9562.github.io/turtle-rider/). 자동 배포 워크플로 원본은 `docs/deploy-pages.yml` |
 
 ---
 
@@ -79,7 +79,7 @@ src/
 ---
 
 ## 개선 사항 (우선순위 순)
-0. **배포 활성화**: `docs/deploy-pages.yml`을 `.github/workflows/deploy.yml`로 추가하고 Pages 소스를 GitHub Actions로 설정 (사용자 작업)
+0. **자동 배포**: 지금은 `npm run deploy:pages`를 손으로 실행한다. `docs/deploy-pages.yml`을 `.github/workflows/deploy.yml`로 추가하고 Pages 소스를 GitHub Actions로 바꾸면 푸시마다 자동 배포된다 (사용자 작업)
 1. **효과음**: 박스 밟을 때, 골인, 실패 (Web Audio 합성)
 2. **별점**: 조건 구간 가운데에 가까울수록 별 3개
 3. **튜토리얼**: 1단계에서 손가락 안내 애니메이션

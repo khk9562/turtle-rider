@@ -27,7 +27,13 @@ npm run build      # dist/
 npm run build:single  # 단일 HTML 파일(dist-single/)
 ```
 
-## GitHub Pages 배포
-자동 배포 워크플로는 `docs/deploy-pages.yml`에 있습니다. 한 번만 설정하면 이후 main에 푸시할 때마다 배포됩니다.
-1. GitHub에서 **Add file > Create new file**로 `.github/workflows/deploy.yml`을 만들고 `docs/deploy-pages.yml` 내용을 붙여 넣어 커밋합니다.
-2. 저장소 **Settings > Pages > Source**를 **GitHub Actions**로 바꿉니다.
+## 배포
+
+### GitHub Pages
+`npm run deploy:pages`가 빌드 결과(`dist/`)를 `gh-pages` 브랜치에 올립니다. 주소는 https://khk9562.github.io/turtle-rider/ 입니다.
+- 저장소 **Settings > Pages > Build and deployment**에서 Source가 **Deploy from a branch**, Branch가 **gh-pages / (root)**인지 확인합니다.
+- 코드를 바꾼 뒤에는 `npm run deploy:pages`를 다시 실행해야 사이트가 갱신됩니다.
+- 푸시할 때마다 자동으로 배포하려면 `docs/deploy-pages.yml`을 `.github/workflows/deploy.yml`로 추가하고 Source를 **GitHub Actions**로 바꿉니다.
+
+### Vercel
+vercel.com에서 이 저장소를 Import하면 됩니다(Vite 자동 인식, 출력 폴더 `dist`). 이후 main 푸시마다 자동 배포됩니다.

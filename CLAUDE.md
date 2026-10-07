@@ -26,4 +26,5 @@
 
 ## 브랜치
 - main 브랜치에 직접 푸시
+- 코드를 main에 푸시한 뒤 `npm run deploy:pages`로 GitHub Pages(gh-pages 브랜치)도 갱신한다
 - `.github/workflows/`는 Claude 세션 권한으로 푸시할 수 없다. 워크플로 변경은 `docs/deploy-pages.yml`을 고치고 사용자에게 반영을 요청한다

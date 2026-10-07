@@ -20,7 +20,8 @@ else
   git -C "$tmp" checkout -q --orphan gh-pages
 fi
 
-git -C "$tmp" rm -rq --ignore-unmatch .
+git -C "$tmp" rm -rfq --ignore-unmatch .
+git -C "$tmp" clean -fdxq
 cp -R dist/. "$tmp/"
 # Jekyll 처리를 끄지 않으면 밑줄로 시작하는 파일이 빠질 수 있다
 touch "$tmp/.nojekyll"

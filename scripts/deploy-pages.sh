@@ -13,7 +13,7 @@ tmp="$(mktemp -d)"
 trap 'git worktree remove --force "$tmp" >/dev/null 2>&1 || true' EXIT
 
 if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
-  git fetch -q origin gh-pages
+  git fetch -q origin gh-pages:refs/remotes/origin/gh-pages
   git worktree add -q -B gh-pages "$tmp" origin/gh-pages
 else
   git worktree add -q --detach "$tmp"

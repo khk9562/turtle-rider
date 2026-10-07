@@ -2,7 +2,10 @@
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 20px;
-  font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-sans: 'IBM Plex Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: var(--font-sans);
+  color-scheme: light;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
 }

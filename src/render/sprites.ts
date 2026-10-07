@@ -72,14 +72,15 @@ export const BOX_ICONS: Record<BoxType, Sprite> = {
   ],
 };
 
+/** 체크무늬 결승 깃발 (무채색) */
 export const GOAL_FLAG: Sprite = [
-  'kk........',
-  'krrrk.....',
-  'krrrrrk...',
-  'krrrrrrrk.',
-  'krrrrrk...',
-  'krrrk.....',
-  'kk........',
+  'kkkkkkkkkk',
+  'kwwkkwwkkk',
+  'kwwkkwwkkk',
+  'kkkwwkkwwk',
+  'kkkwwkkwwk',
+  'kkkkkkkkkk',
+  'k.........',
   'k.........',
   'k.........',
   'kkk.......',

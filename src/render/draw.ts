@@ -34,7 +34,8 @@ export interface Scene {
   caption: string | null;
 }
 
-const FONT = 'system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+const FONT = '"IBM Plex Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+const MONO = '"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace';
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
@@ -48,11 +49,14 @@ function drawSprite(ctx: CanvasRenderingContext2D, sprite: readonly string[], x:
 
 function drawBoard(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = theme.surface;
-  roundRect(ctx, 0, 0, WORLD_W, WORLD_H, 12);
+  roundRect(ctx, 0.5, 0.5, WORLD_W - 1, WORLD_H - 1, 14);
   ctx.fill();
+  ctx.strokeStyle = theme.line;
+  ctx.lineWidth = 1;
+  ctx.stroke();
   ctx.fillStyle = theme.grid;
   for (let x = 20; x < WORLD_W; x += 20) {
-    for (let y = 20; y < WORLD_H; y += 20) ctx.fillRect(x - 1, y - 1, 2, 2);
+    for (let y = 20; y < WORLD_H; y += 20) ctx.fillRect(x - 0.75, y - 0.75, 1.5, 1.5);
   }
 }
 
@@ -75,13 +79,13 @@ function drawBoxes(ctx: CanvasRenderingContext2D, level: Level, hit: boolean[]) 
     drawSprite(ctx, BOX_ICONS[box.type], x + 4, y + (h - 10 * px) / 2, px);
     const e = BOX_EFFECTS[box.type];
     ctx.fillStyle = theme.text;
-    ctx.font = `700 10px ${FONT}`;
+    ctx.font = `600 10px ${MONO}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     // 아이콘 오른쪽 남은 칸 가운데에 배율을 쓴다
     ctx.fillText(`x${e.mult}`, (x + 4 + 10 * px + x + w) / 2, y + h / 2);
     if (hit[i]) {
-      ctx.fillStyle = theme.success;
+      ctx.fillStyle = theme.text;
       ctx.beginPath();
       ctx.arc(x + w, y, 6, 0, Math.PI * 2);
       ctx.fill();
@@ -98,26 +102,29 @@ function drawBoxes(ctx: CanvasRenderingContext2D, level: Level, hit: boolean[]) 
 
 function drawEnds(ctx: CanvasRenderingContext2D, level: Level) {
   const { start, goal } = level;
-  ctx.fillStyle = theme.accent;
+  ctx.fillStyle = theme.surface;
+  ctx.strokeStyle = theme.text;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(start.x, start.y, 6, 0, Math.PI * 2);
+  ctx.arc(start.x, start.y, 5, 0, Math.PI * 2);
   ctx.fill();
-  ctx.font = `700 11px ${FONT}`;
+  ctx.stroke();
+  ctx.font = `600 10px ${FONT}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
-  ctx.fillStyle = theme.text;
-  ctx.fillText('출발', start.x, start.y - 24);
+  ctx.fillStyle = theme.muted;
+  ctx.fillText('출발', start.x, start.y - 26);
 
   ctx.save();
-  ctx.setLineDash([4, 4]);
-  ctx.strokeStyle = theme.danger;
-  ctx.lineWidth = 2;
+  ctx.setLineDash([3, 4]);
+  ctx.strokeStyle = theme.faint;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.arc(goal.x, goal.y, GOAL_RADIUS, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
-  drawSprite(ctx, GOAL_FLAG, goal.x - 2, goal.y - 26, 2.4);
-  ctx.fillStyle = theme.text;
+  drawSprite(ctx, GOAL_FLAG, goal.x - 1, goal.y - 24, 2.2);
+  ctx.fillStyle = theme.muted;
   ctx.fillText('골', goal.x, goal.y + GOAL_RADIUS + 14);
 }
 
@@ -127,7 +134,7 @@ function drawPath(ctx: CanvasRenderingContext2D, pts: Vec[]) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.strokeStyle = theme.path;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(pts[0].x, pts[0].y);
   for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
@@ -137,7 +144,8 @@ function drawPath(ctx: CanvasRenderingContext2D, pts: Vec[]) {
 
 function drawPreviewLine(ctx: CanvasRenderingContext2D, level: Level) {
   ctx.save();
-  ctx.setLineDash([6, 6]);
+  ctx.setLineDash([2, 6]);
+  ctx.lineCap = 'round';
   ctx.strokeStyle = theme.pathPreview;
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -190,20 +198,20 @@ export function drawScene(ctx: CanvasRenderingContext2D, view: View, cssW: numbe
   if (scene.turtle) drawTurtle(ctx, scene.turtle);
 
   if (scene.clock) {
-    ctx.font = `800 28px ${FONT}`;
+    ctx.font = `600 26px ${MONO}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 6;
     ctx.strokeStyle = theme.surface;
     ctx.strokeText(scene.clock, WORLD_W / 2, 12);
     ctx.fillStyle = theme.text;
     ctx.fillText(scene.clock, WORLD_W / 2, 12);
   }
   if (scene.caption) {
-    ctx.font = `600 13px ${FONT}`;
+    ctx.font = `500 12px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = theme.muted;
-    ctx.fillText(scene.caption, WORLD_W / 2, 46);
+    ctx.fillText(scene.caption, WORLD_W / 2, 44);
   }
 }

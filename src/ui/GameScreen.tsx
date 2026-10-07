@@ -25,6 +25,7 @@ import {
 import { drawScene, fitView, toWorld, type Scene, type View } from '@/render/draw';
 import { BOX_ICONS, spriteCanvas } from '@/render/sprites';
 import { loadProgress, recordClear, saveProgress, type Progress } from '@/shared/storage';
+import { boxColors } from '@/shared/theme';
 import styles from './GameScreen.module.css';
 
 type Phase = 'preview' | 'draw' | 'run' | 'result';
@@ -265,13 +266,38 @@ function LevelPlay({
     changePhase('draw');
   };
 
+  // PC 키보드: Enter 출발, Ctrl/Cmd+Z 또는 Backspace 되돌리기, P 미리보기, F 빨리 감기
+  const keyActions = useRef({ go, undo, startPreview, retry, toggleFast: () => setFast((f) => !f) });
+  useEffect(() => {
+    keyActions.current = { go, undo, startPreview, retry, toggleFast: () => setFast((f) => !f) };
+  });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      const a = keyActions.current;
+      const ph = phaseRef.current;
+      const key = e.key.toLowerCase();
+      if (key === 'enter' && ph === 'draw') a.go();
+      else if (((key === 'z' && (e.ctrlKey || e.metaKey)) || key === 'backspace') && ph === 'draw') a.undo();
+      else if (key === 'p' && ph !== 'run' && ph !== 'result') a.startPreview();
+      else if (key === 'f' && ph === 'run') a.toggleFast();
+      else if (key === 'escape' && (ph === 'run' || ph === 'result')) a.retry();
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const canPrev = levelNo > 1;
   const canNext = levelNo < unlocked;
   const levelTypes = [...new Set(level.boxes.map((b) => b.type))];
+  const { rule } = level;
 
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
+        <div className={styles.brand}>거북 라이더</div>
         <div className={styles.levelNav}>
           <button
             className={styles.navBtn}
@@ -279,43 +305,71 @@ function LevelPlay({
             disabled={!canPrev || phase === 'run'}
             aria-label="이전 단계"
           >
-            ‹
+            <Chevron dir="left" />
           </button>
-          <span className={styles.levelLabel}>{levelNo}단계</span>
+          <span className={styles.levelLabel}>
+            <span className={styles.levelNum}>{String(levelNo).padStart(2, '0')}</span>
+            <span className={styles.levelUnit}>단계</span>
+          </span>
           <button
             className={styles.navBtn}
             onClick={() => onLevel(levelNo + 1)}
             disabled={!canNext || phase === 'run'}
             aria-label="다음 단계"
           >
-            ›
+            <Chevron dir="right" />
           </button>
-        </div>
-        <div className={styles.rule} aria-label="도착 조건">
-          {describeRule(level.rule)}
         </div>
       </header>
 
-      <div className={styles.info}>
-        <span>
-          일직선 <b>{straight.toFixed(1)}초</b>
-          <span className={styles.dim}> (박스 효과 제외)</span>
+      <section className={styles.goal} aria-label="도착 조건">
+        <span className={styles.label}>도착 조건</span>
+        <span className={styles.ruleValue}>
+          {rule.min !== null && (
+            <>
+              <span className={styles.ruleLine}>
+                <b>{rule.min.toFixed(1)}</b>초 초과
+              </span>
+              <span className={styles.ruleSep}>·</span>
+            </>
+          )}
+          <span className={styles.ruleLine}>
+            <b>{rule.max.toFixed(1)}</b>초 이내
+          </span>
         </span>
-        <span className={snap.ready ? styles.ok : undefined}>
-          박스 {snap.hit}/{level.boxes.length} · 골 {snap.reachedGoal ? '도착' : '미도착'}
-        </span>
-      </div>
+      </section>
 
-      <div className={styles.legend}>
+      <dl className={styles.stats}>
+        <div className={styles.stat}>
+          <dt className={styles.label}>일직선</dt>
+          <dd>
+            <b>{straight.toFixed(1)}</b>초
+          </dd>
+        </div>
+        <div className={styles.stat}>
+          <dt className={styles.label}>박스</dt>
+          <dd>
+            <b>{snap.hit}</b>/{level.boxes.length}
+          </dd>
+        </div>
+        <div className={styles.stat}>
+          <dt className={styles.label}>골</dt>
+          <dd className={snap.reachedGoal ? undefined : styles.dim}>{snap.reachedGoal ? '도착' : '미도착'}</dd>
+        </div>
+      </dl>
+
+      <ul className={styles.legend} aria-label="박스 효과">
         {levelTypes.map((t) => (
           <LegendChip key={t} type={t} />
         ))}
-      </div>
+        <li className={styles.hint}>일직선 시간은 박스 효과 없이 잰 값이에요.</li>
+      </ul>
 
       <div className={styles.stage}>
         <canvas
           ref={canvasRef}
           className={styles.canvas}
+          aria-label="선을 그리는 판"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -331,18 +385,22 @@ function LevelPlay({
           <>
             <button className={styles.btn} onClick={() => setFast((f) => !f)}>
               {fast ? '보통 속도' : '빨리 감기 x3'}
+              <kbd className={styles.kbd}>F</kbd>
             </button>
             <button className={styles.btn} onClick={retry}>
               그만하기
+              <kbd className={styles.kbd}>Esc</kbd>
             </button>
           </>
         ) : (
           <>
             <button className={styles.btn} onClick={startPreview} disabled={phase === 'result'}>
               미리보기
+              <kbd className={styles.kbd}>P</kbd>
             </button>
             <button className={styles.btn} onClick={undo} disabled={phase !== 'draw' || snap.strokes === 0}>
               되돌리기
+              <kbd className={styles.kbd}>⌫</kbd>
             </button>
             <button className={styles.btn} onClick={clear} disabled={phase !== 'draw' || snap.strokes === 0}>
               지우기
@@ -353,11 +411,27 @@ function LevelPlay({
               disabled={phase !== 'draw' || !snap.ready}
             >
               출발
+              <kbd className={styles.kbd}>Enter</kbd>
             </button>
           </>
         )}
       </div>
     </div>
+  );
+}
+
+function Chevron({ dir }: { dir: 'left' | 'right' }) {
+  return (
+    <svg viewBox="0 0 16 16" width="1em" height="1em" aria-hidden="true">
+      <path
+        d={dir === 'left' ? 'M10 3 5 8l5 5' : 'M6 3l5 5-5 5'}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -401,10 +475,13 @@ function LegendChip({ type }: { type: BoxType }) {
   const src = useMemo(() => spriteCanvas(BOX_ICONS[type]).toDataURL(), [type]);
   const e = BOX_EFFECTS[type];
   return (
-    <span className={styles.chip}>
+    <li className={styles.chip} style={{ '--chip': boxColors[type].fill } as React.CSSProperties}>
       <img className={styles.chipIcon} src={src} alt="" />
-      {e.name} x{e.mult} · {e.duration}초
-    </span>
+      <span className={styles.chipName}>{e.name}</span>
+      <span className={styles.chipValue}>
+        x{e.mult} · {e.duration}초
+      </span>
+    </li>
   );
 }
 
@@ -437,8 +514,12 @@ function ResultCard({
     <div className={styles.resultBackdrop}>
       <div className={styles.resultCard} role="dialog" aria-label={text.title}>
         <h2 className={ok ? styles.ok : styles.fail}>{text.title}</h2>
+        <div className={styles.resultTime}>
+          {result.time.toFixed(2)}
+          <small>초</small>
+        </div>
         <p>{text.body(result, level)}</p>
-        <p className={styles.dim}>조건: {describeRule(level.rule)}</p>
+        <p className={styles.dim}>조건 · {describeRule(level.rule)}</p>
         <div className={styles.resultActions}>
           <button className={styles.btn} onClick={onRetry}>
             선 고치기

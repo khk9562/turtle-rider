@@ -1,7 +1,6 @@
 :root {
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  /* 버튼, 팝업, 판은 모두 2px. 박스만 둥글게 둔다 */
+  --radius: 2px;
   --font-sans: 'IBM Plex Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   font-family: var(--font-sans);

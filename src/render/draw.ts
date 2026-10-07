@@ -49,7 +49,7 @@ function drawSprite(ctx: CanvasRenderingContext2D, sprite: readonly string[], x:
 
 function drawBoard(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = theme.surface;
-  roundRect(ctx, 0.5, 0.5, WORLD_W - 1, WORLD_H - 1, 14);
+  roundRect(ctx, 0.5, 0.5, WORLD_W - 1, WORLD_H - 1, 2);
   ctx.fill();
   ctx.strokeStyle = theme.line;
   ctx.lineWidth = 1;

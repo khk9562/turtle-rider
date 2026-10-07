@@ -1,5 +1,5 @@
 .screen {
-  height: 100dvh;
+  height: 100%;
   max-width: 32rem;
   margin: 0 auto;
   display: flex;

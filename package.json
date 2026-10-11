@@ -9,8 +9,7 @@
     "build:single": "vite build -c vite.artifact.config.ts",
     "lint": "eslint .",
     "test": "vitest run",
-    "preview": "vite preview",
-    "deploy:pages": "bash scripts/deploy-pages.sh"
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.2.4",

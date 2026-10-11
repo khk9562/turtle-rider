@@ -28,12 +28,6 @@ npm run build:single  # 단일 HTML 파일(dist-single/)
 ```
 
 ## 배포
-
-### GitHub Pages
-`npm run deploy:pages`가 빌드 결과(`dist/`)를 `gh-pages` 브랜치에 올립니다. 주소는 https://khk9562.github.io/turtle-rider/ 입니다.
-- 저장소 **Settings > Pages > Build and deployment**에서 Source가 **Deploy from a branch**, Branch가 **gh-pages / (root)**인지 확인합니다.
-- 코드를 바꾼 뒤에는 `npm run deploy:pages`를 다시 실행해야 사이트가 갱신됩니다.
-- 푸시할 때마다 자동으로 배포하려면 `docs/deploy-pages.yml`을 `.github/workflows/deploy.yml`로 추가하고 Source를 **GitHub Actions**로 바꿉니다.
-
-### Vercel
-vercel.com에서 이 저장소를 Import하면 됩니다(Vite 자동 인식, 출력 폴더 `dist`). 이후 main 푸시마다 자동 배포됩니다.
+따로 배포하지 않습니다. [fusion_game_portal](https://github.com/khk9562/fusion_game_portal)이 배포할 때 이 저장소의 `main`을 받아 함께 빌드합니다.
+주소: https://khk9562.github.io/fusion_game_portal/games/turtle-rider/
+- 포털 하위 경로에서 동작하도록 `vite.config.ts`의 `base: './'`(상대 경로)를 유지합니다.

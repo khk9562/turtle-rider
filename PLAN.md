@@ -14,7 +14,7 @@
 | 스타일링 | CSS Modules, 상대 단위(rem, %, dvh) |
 | 빌드 | Vite 8 (`npm run build`), 단일 파일 `npm run build:single` |
 | 테스트 | vitest (`npm test`) |
-| 배포 | GitHub Pages: `npm run deploy:pages`로 `gh-pages` 브랜치에 빌드 결과를 올린다 (https://khk9562.github.io/turtle-rider/). 자동 배포 워크플로 원본은 `docs/deploy-pages.yml` |
+| 배포 | [fusion_game_portal](https://github.com/khk9562/fusion_game_portal)이 배포할 때 이 저장소의 main을 함께 빌드한다 (https://khk9562.github.io/fusion_game_portal/games/turtle-rider/). 따로 배포하지 않는다 |
 
 ---
 
@@ -95,7 +95,6 @@ src/
 
 ## 개선 사항 (우선순위 순)
 - 디자인 검토에서 보류한 안: 골을 진한 실선 링으로, 대기 중 거북이를 수평으로 출발점 옆에, 박스/골 준비 상태 점 표시, 성공 문구 검정, 거북이 1.3배
-0. **자동 배포**: 지금은 `npm run deploy:pages`를 손으로 실행한다. `docs/deploy-pages.yml`을 `.github/workflows/deploy.yml`로 추가하고 Pages 소스를 GitHub Actions로 바꾸면 푸시마다 자동 배포된다 (사용자 작업)
 1. **효과음**: 박스 밟을 때, 골인, 실패 (Web Audio 합성)
 2. **별점**: 조건 구간 가운데에 가까울수록 별 3개
 3. **튜토리얼**: 1단계에서 손가락 안내 애니메이션

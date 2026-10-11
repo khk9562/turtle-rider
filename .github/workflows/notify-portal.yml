@@ -1,0 +1,30 @@
+# 게임 저장소용. main에 푸시되면 퓨전 게임 포털(khk9562/fusion_game_portal)에 알린다.
+# 포털은 이 알림으로 게임별 업데이트 기록을 남기고 다시 배포한다.
+# 필요한 것: 이 저장소 Settings > Secrets and variables > Actions에 PORTAL_DISPATCH_TOKEN
+#   (fusion_game_portal에 Contents: Read and write 권한이 있는 Fine-grained token)
+# 세 게임 저장소 모두 이 파일을 그대로 쓴다. 저장소 이름으로 포털이 어떤 게임인지 찾는다.
+name: Notify game portal
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send update to fusion_game_portal
+        env:
+          TOKEN: ${{ secrets.PORTAL_DISPATCH_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          first_line=$(printf '%s' "$MESSAGE" | head -n 1 | cut -c 1-200)
+          payload=$(jq -n --arg repo "$REPO" --arg sha "$SHA" --arg message "$first_line" \
+            '{event_type: "game-updated", client_payload: {repo: $repo, sha: $sha, message: $message}}')
+          curl -sSf -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/khk9562/fusion_game_portal/dispatches \
+            -d "$payload"

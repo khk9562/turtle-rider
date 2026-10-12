@@ -25,6 +25,7 @@ export const boxColors: Record<BoxType, { fill: string; edge: string }> = {
   rabbit: { fill: '#ffc2d4', edge: '#e2557f' },
   snail: { fill: '#ffd894', edge: '#d98a17' },
   plane: { fill: '#aed8ff', edge: '#2f7fd8' },
+  nap: { fill: '#d9c8ff', edge: '#7b5cd6' },
 };
 
 /** 픽셀 스프라이트 팔레트 */
@@ -42,6 +43,8 @@ export const pixelPalette: Record<string, string> = {
   u: '#4a95e8',
   r: '#e2554f',
   n: '#d1d1d6',
+  v: '#7b5cd6',
+  V: '#b8a2f2',
 };
 
 export function applyTheme(root: HTMLElement = document.documentElement): void {

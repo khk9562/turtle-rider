@@ -70,6 +70,18 @@ export const BOX_ICONS: Record<BoxType, Sprite> = {
     '....kk....',
     '..........',
   ],
+  nap: [
+    '.....kkkk.',
+    '.......kk.',
+    '......kk..',
+    '.....kkkk.',
+    '..kkkk....',
+    '.kVVVVk...',
+    'kVwwwwVk..',
+    'kVvvvvVk..',
+    '.kVVVVk...',
+    '..kkkk....',
+  ],
 };
 
 /** 체크무늬 결승 깃발 (무채색) */

@@ -1,15 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { BOX_EFFECTS } from './boxes';
-import { addPoint, beginStroke, drawingStatus, emptyDrawing, endStroke, undoStroke } from './drawing';
+import { addPoint, beginStroke, drawingStatus, emptyDrawing, endStroke, inkUsed, undoStroke } from './drawing';
 import { segmentEnterRect } from './geometry';
 import {
+  INK_FROM_LEVEL,
+  MAX_LEVEL,
   RANGE_FROM_LEVEL,
+  TIGHT_FROM_LEVEL,
   WORLD_H,
   WORLD_W,
+  boxCountForLevel,
   generateLevel,
   judge,
   referencePoints,
+  solveRoute,
   straightLineTime,
+  type Level,
 } from './level';
 import { BASE_SPEED, MAX_SLOPE_FACTOR, MIN_SLOPE_FACTOR, preparePath, simulate, slopeFactor } from './sim';
 
@@ -43,6 +49,9 @@ describe('sim', () => {
     const snail = simulate(preparePath(pts, [{ type: 'snail', rect }]));
     expect(rabbit).toBeLessThan(base);
     expect(snail).toBeGreaterThan(base);
+    // 낮잠은 그 자리에서 1초 멈춘다
+    const nap = simulate(preparePath(pts, [{ type: 'nap', rect }]));
+    expect(nap - base).toBeCloseTo(BOX_EFFECTS.nap.duration, 1);
     // 토끼 효과 2초 동안 2배속 → 정확히 2초 * 기본속도만큼 거리를 더 가므로 2초 단축
     const e = BOX_EFFECTS.rabbit;
     expect(base - rabbit).toBeCloseTo(e.duration * (e.mult - 1), 1);
@@ -59,10 +68,10 @@ describe('level', () => {
     expect(generateLevel(7)).toEqual(generateLevel(7));
   });
 
-  it('모든 단계가 월드 안에 있고 박스가 겹치지 않는다', () => {
-    for (let n = 1; n <= 40; n++) {
+  it('모든 단계가 월드 안에 있고 정해진 수만큼 박스가 놓인다', () => {
+    for (let n = 1; n <= MAX_LEVEL; n++) {
       const lv = generateLevel(n);
-      expect(lv.boxes.length).toBeGreaterThan(0);
+      expect(lv.boxes.length).toBe(boxCountForLevel(n));
       for (const b of lv.boxes) {
         expect(b.rect.x).toBeGreaterThanOrEqual(0);
         expect(b.rect.y).toBeGreaterThanOrEqual(0);
@@ -80,11 +89,42 @@ describe('level', () => {
   });
 
   it('구간 단계는 기준 경로가 너무 빨라서 일부러 돌아가야 한다', () => {
-    for (let n = RANGE_FROM_LEVEL; n <= 30; n++) {
+    for (let n = RANGE_FROM_LEVEL; n <= MAX_LEVEL; n++) {
       const lv = generateLevel(n);
       expect(lv.rule.min).not.toBeNull();
-      expect(lv.rule.max - (lv.rule.min ?? 0)).toBeGreaterThanOrEqual(1);
+      expect(lv.rule.max - (lv.rule.min ?? 0)).toBeGreaterThanOrEqual(n < TIGHT_FROM_LEVEL ? 1 : 0.5 - 1e-9);
       expect(judge(lv.rule, lv.referenceTime)).toBe('too-fast');
+    }
+  });
+
+  it('구간 폭은 단계가 오를수록 좁아지고 50단계에서 0.5초가 된다', () => {
+    const width = (n: number) => {
+      const { min, max } = generateLevel(n).rule;
+      return Math.round((max - (min ?? 0)) * 10) / 10;
+    };
+    for (let n = RANGE_FROM_LEVEL + 1; n <= MAX_LEVEL; n++) expect(width(n)).toBeLessThanOrEqual(width(n - 1));
+    expect(width(TIGHT_FROM_LEVEL)).toBe(1);
+    expect(width(MAX_LEVEL)).toBe(0.5);
+  });
+
+  it('잉크 제한은 정해진 단계부터 붙는다', () => {
+    for (let n = 1; n <= MAX_LEVEL; n++) {
+      const lv = generateLevel(n);
+      if (n < INK_FROM_LEVEL) expect(lv.ink).toBeNull();
+      else expect(lv.ink).toBeGreaterThan(0);
+    }
+  });
+
+  it('모든 단계는 그리기로 실제 성공할 수 있다(잉크 포함)', () => {
+    for (let n = 1; n <= MAX_LEVEL; n++) {
+      const lv = generateLevel(n);
+      const route = solveRoute(lv, lv.rule);
+      expect(route, `${n}단계 해답`).not.toBeNull();
+      const d = drawRoute(lv, route!);
+      const st = drawingStatus(lv, d);
+      expect(st.ready, `${n}단계 출발 가능`).toBe(true);
+      expect(judge(lv.rule, simulate(st.path)), `${n}단계 판정`).toBe('success');
+      if (lv.ink !== null) expect(st.ink).toBeLessThanOrEqual(lv.ink);
     }
   });
 
@@ -100,6 +140,14 @@ describe('level', () => {
     expect(judge(rule, 7.01)).toBe('too-slow');
   });
 });
+
+function drawRoute(lv: Level, route: { x: number; y: number }[]) {
+  const d = emptyDrawing();
+  beginStroke(lv, d, route[1]);
+  for (const p of route.slice(2)) addPoint(lv, d, p);
+  endStroke(d);
+  return d;
+}
 
 describe('drawing', () => {
   it('박스를 모두 지나 골에 닿아야 출발할 수 있다', () => {
@@ -139,5 +187,15 @@ describe('drawing', () => {
     beginStroke(lv, d, far);
     expect(d.finished).toBe(true);
     expect(d.strokes[0][0]).toEqual(lv.goal);
+  });
+
+  it('잉크가 다 떨어지면 더 그려지지 않는다', () => {
+    const lv = { ...generateLevel(1), ink: 100 };
+    const d = emptyDrawing();
+    const away = { x: lv.start.x, y: lv.start.y > WORLD_H / 2 ? lv.start.y - 300 : lv.start.y + 300 };
+    beginStroke(lv, d, away);
+    expect(inkUsed(lv, d)).toBeCloseTo(100, 5);
+    expect(addPoint(lv, d, lv.start)).toBe(false);
+    expect(d.finished).toBe(false);
   });
 });

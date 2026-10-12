@@ -57,3 +57,12 @@ export function segmentEnterRect(a: Vec, b: Vec, r: Rect): number | null {
 export function clamp(v: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, v));
 }
+
+/** 점 p에서 선분 a→b까지 가장 가까운 거리 */
+export function pointSegmentDist(p: Vec, a: Vec, b: Vec): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 === 0 ? 0 : clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / len2, 0, 1);
+  return dist(p, { x: a.x + dx * t, y: a.y + dy * t });
+}

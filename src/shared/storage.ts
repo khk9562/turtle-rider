@@ -1,3 +1,5 @@
+import { MAX_LEVEL } from '@/game/level';
+
 const KEY = 'turtle-rider:v1';
 
 export interface Progress {
@@ -16,7 +18,7 @@ export function loadProgress(): Progress {
     if (!raw) return EMPTY;
     const p = JSON.parse(raw) as Partial<Progress>;
     return {
-      unlocked: Math.max(1, Number(p.unlocked) || 1),
+      unlocked: Math.min(MAX_LEVEL, Math.max(1, Number(p.unlocked) || 1)),
       cleared: typeof p.cleared === 'object' && p.cleared ? p.cleared : {},
     };
   } catch {
@@ -34,7 +36,7 @@ export function saveProgress(p: Progress): void {
 
 export function recordClear(p: Progress, level: number, time: number): Progress {
   return {
-    unlocked: Math.max(p.unlocked, level + 1),
+    unlocked: Math.max(p.unlocked, Math.min(MAX_LEVEL, level + 1)),
     cleared: { ...p.cleared, [level]: time },
   };
 }

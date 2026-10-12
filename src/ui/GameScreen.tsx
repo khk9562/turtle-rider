@@ -11,7 +11,7 @@ import {
   type Drawing,
   type DrawingStatus,
 } from '@/game/drawing';
-import { describeRule, generateLevel, judge, straightLineTime, type Level } from '@/game/level';
+import { MAX_LEVEL, describeRule, generateLevel, judge, straightLineTime, type Level } from '@/game/level';
 import {
   SIM_DT,
   createRun,
@@ -74,14 +74,21 @@ export function GameScreen() {
 
 interface Snapshot {
   hit: number;
+  /** 남은 잉크(%). 잉크 제한이 없으면 null */
+  inkLeft: number | null;
   reachedGoal: boolean;
   ready: boolean;
   strokes: number;
 }
 
-function snapshotOf(status: DrawingStatus, drawing: Drawing): Snapshot {
+function inkLeftOf(level: Level, status: DrawingStatus): number | null {
+  return level.ink === null ? null : Math.max(0, Math.floor((1 - status.ink / level.ink) * 100));
+}
+
+function snapshotOf(level: Level, status: DrawingStatus, drawing: Drawing): Snapshot {
   return {
     hit: status.hit.filter(Boolean).length,
+    inkLeft: inkLeftOf(level, status),
     reachedGoal: status.reachedGoal,
     ready: status.ready,
     strokes: drawing.strokes.length,
@@ -114,7 +121,7 @@ function LevelPlay({
   const [phase, setPhase] = useState<Phase>('preview');
   const [result, setResult] = useState<Result | null>(null);
   const [fast, setFast] = useState(false);
-  const [snap, setSnap] = useState<Snapshot>(() => snapshotOf(init.status, init.drawing));
+  const [snap, setSnap] = useState<Snapshot>(() => snapshotOf(level, init.status, init.drawing));
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewRef = useRef<View | null>(null);
@@ -137,9 +144,10 @@ function LevelPlay({
   const refreshStatus = useCallback(() => {
     const status = drawingStatus(level, drawingRef.current);
     statusRef.current = status;
-    const next = snapshotOf(status, drawingRef.current);
+    const next = snapshotOf(level, status, drawingRef.current);
     setSnap((prev) =>
       prev.hit === next.hit &&
+      prev.inkLeft === next.inkLeft &&
       prev.reachedGoal === next.reachedGoal &&
       prev.ready === next.ready &&
       prev.strokes === next.strokes
@@ -292,7 +300,7 @@ function LevelPlay({
   }, []);
 
   const canPrev = levelNo > 1;
-  const canNext = levelNo < unlocked;
+  const canNext = levelNo < Math.min(unlocked, MAX_LEVEL);
   const levelTypes = [...new Set(level.boxes.map((b) => b.type))];
   const { rule } = level;
 
@@ -341,7 +349,7 @@ function LevelPlay({
         </span>
       </section>
 
-      <dl className={styles.stats}>
+      <dl className={`${styles.stats} ${snap.inkLeft !== null ? styles.withInk : ''}`}>
         <div className={styles.stat}>
           <dt className={styles.label}>일직선</dt>
           <dd>
@@ -358,6 +366,14 @@ function LevelPlay({
           <dt className={styles.label}>골</dt>
           <dd className={snap.reachedGoal ? undefined : styles.dim}>{snap.reachedGoal ? '도착' : '미도착'}</dd>
         </div>
+        {snap.inkLeft !== null && (
+          <div className={styles.stat}>
+            <dt className={styles.label}>잉크</dt>
+            <dd className={snap.inkLeft === 0 ? styles.fail : undefined}>
+              <b>{snap.inkLeft}</b>%
+            </dd>
+          </div>
+        )}
       </dl>
 
       <ul className={styles.legend} aria-label="박스 효과">
@@ -459,7 +475,11 @@ function buildScene(
     else if (effect) caption = `${BOX_EFFECTS[effect].name} 효과 x${BOX_EFFECTS[effect].mult}`;
   } else {
     turtle = { pose: poseAt(preparePath([level.start, level.goal]), 0), frame: 0, effect: null };
-    if (drawing.strokes.length === 0) caption = '출발점부터 선을 그려 박스를 모두 지나 골까지';
+    if (drawing.strokes.length === 0)
+      caption =
+        level.ink === null
+          ? '출발점부터 선을 그려 박스를 모두 지나 골까지'
+          : '잉크가 정해져 있어요. 아껴 그려 박스를 모두 지나 골까지';
   }
 
   return {
@@ -488,7 +508,13 @@ function LegendChip({ type }: { type: BoxType }) {
 }
 
 const VERDICT_TEXT: Record<Verdict, { title: string; body: (r: Result, lv: Level) => string }> = {
-  success: { title: '도착 성공', body: (r) => `${r.time.toFixed(2)}초에 골인했어요.` },
+  success: {
+    title: '도착 성공',
+    body: (r, lv) =>
+      lv.number === MAX_LEVEL
+        ? `${r.time.toFixed(2)}초에 골인했어요. ${MAX_LEVEL}단계를 모두 깼어요!`
+        : `${r.time.toFixed(2)}초에 골인했어요.`,
+  },
   'too-slow': {
     title: '시간 초과',
     body: (r, lv) => `${lv.rule.max.toFixed(1)}초 안에 못 왔어요. 끝까지 갔다면 ${r.time.toFixed(2)}초예요.`,
@@ -526,7 +552,7 @@ function ResultCard({
           <button className={styles.btn} onClick={onRetry}>
             선 고치기
           </button>
-          {ok && (
+          {ok && level.number < MAX_LEVEL && (
             <button className={`${styles.btn} ${styles.primary}`} onClick={onNext}>
               다음 단계
             </button>

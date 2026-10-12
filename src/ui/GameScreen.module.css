@@ -358,28 +358,67 @@
   flex: 1;
 }
 
-/* 낮은 휴대폰(아이폰 SE 등): 정보 영역을 줄여 판에 높이를 더 준다 */
-@media (max-width: 45.99rem) and (max-height: 48rem) {
+/*
+ * 휴대폰: 판은 월드 비율(360x600)을 지키므로 높이가 모자라면 양옆이 빈다.
+ * 제목을 숨기고 도착 조건과 단계 이동을 한 줄에, 범례도 한 줄로 줄여 판에 높이를 최대한 준다
+ */
+@media (max-width: 45.99rem) {
   .screen {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'goal     header'
+      'stats    stats'
+      'legend   legend'
+      'stage    stage'
+      'controls controls';
+    column-gap: 0.5rem;
     row-gap: 0.5rem;
+    padding: max(0.5rem, env(safe-area-inset-top)) 0.5rem max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .brand {
+    display: none;
+  }
+
+  .navBtn {
+    width: 2rem;
+  }
+
+  .levelLabel {
+    min-width: 3.5rem;
   }
 
   .goal {
     flex-direction: row;
     align-items: baseline;
-    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  /* "초과 · 이내"로 뜻이 드러나므로 휴대폰에서는 '도착 조건' 글씨를 뺀다 */
+  .goal .label {
+    display: none;
   }
 
   .ruleValue {
     font-size: 1rem;
+    white-space: nowrap;
   }
 
   .ruleValue b {
     font-size: 1.1875rem;
   }
 
+  .ruleSep {
+    margin: 0 0.3rem;
+  }
+
   .stat {
     padding: 0.3rem 0;
+  }
+
+  .stat + .stat {
+    padding-left: 0.625rem;
   }
 
   .stat dd {
@@ -402,6 +441,16 @@
 
   .btn {
     min-height: 2.75rem;
+  }
+}
+
+/* 낮은 휴대폰(아이폰 SE 등): 수치 칸을 한 줄로 눕혀 판에 높이를 조금 더 준다 */
+@media (max-width: 45.99rem) and (max-height: 48rem) {
+  .stat {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.3rem;
+    white-space: nowrap;
   }
 }
 
